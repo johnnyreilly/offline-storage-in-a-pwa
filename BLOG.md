@@ -34,8 +34,19 @@ The excellent [Jake Archibald](https://twitter.com/jaffathecake) of Google has w
 
 > A super-simple-small promise-based keyval store implemented with IndexedDB
 
-The API is essentially equivalent to 
+The API is essentially equivalent to `localStorage` with a few lovely differences:
 
-https://github.com/jakearchibald/idb-keyval
+1. The API is promise based; all functions return a `Promise`; this makes it a non-blocking API.
+2. The API is not restricted to `string`s as `localStorage` is. To quote the docs: *this is IDB-backed, you can store anything structured-clonable (numbers, arrays, objects, dates, blobs etc)*
+
+Because this is abstraction built on top of IndexedDB, it can be used both in the context of a typical web app and also in a `Worker` or a `ServiceWorker` if required.
+
+Let's take a look at what usage of `IDB-Keyval` might look like.
+
+(Please note, there is nothing React specific)
+
+```shell
+npx create-react-app offline-storage-in-a-pwa --template typescript
+```
 
 For example, a user may have preferences around the way they interact with the app
