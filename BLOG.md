@@ -226,4 +226,89 @@ As you can see, this means that we are persisting preferences beyond page refres
 
 ![use dark mode with IDB-Keyval](use-dark-mode-with-idb-keyval.gif)
 
+#### Usage as a React hook
 
+Finally it's time for bonus points.  Wouldn't it be nice if we could move this functionality into a reusable React hook?  Let's do it!
+
+Let's create a new `usePersistedState.ts` file:
+
+```ts
+import { useState, useEffect, useCallback } from "react";
+import { set, get } from "idb-keyval";
+
+export function usePersistedState<TState>(keyToPersistWith: string, defaultState: TState) {
+    const [state, setState] = useState<TState | undefined>(undefined);
+
+    useEffect(() => {
+        get<TState>(keyToPersistWith).then(retrievedState =>
+            // If a value is retrieved then use it; otherwise default to defaultValue
+            setState(retrievedState ?? defaultState));
+    }, [keyToPersistWith, setState, defaultState]);
+    
+    const setPersistedValue = useCallback((newValue: TState) => {
+        setState(newValue);
+        set(keyToPersistWith, newValue);
+    }, [keyToPersistWith, setState]);
+    
+    return [state, setPersistedValue] as const;
+}
+```
+
+This new hook is modelled after the API of [`useState`](https://reactjs.org/docs/hooks-reference.html#usestate) and is named `usePersistentState`.  It requires that a key be supplied which is the key that will be used to save the data.  It also requires a default value to use in the case that nothing is found during the lookup.
+
+It returns (just like `useState`) a stateful value, and a function to update it. Finally, let's switch over our `App.tsx` to use our shiny new hook:
+
+```tsx
+import React from "react";
+import "./App.css";
+import { usePersistedState } from "./usePersistedState";
+
+const sharedStyles = {
+  height: "30rem",
+  fontSize: "5rem",
+  textAlign: "center"
+} as const;
+
+function App() {
+  const [darkModeOn, setDarkModeOn] = usePersistedState<boolean>("darkModeOn", true);
+
+  const handleOnChange = ({ target }: React.ChangeEvent<HTMLInputElement>) =>
+    setDarkModeOn(target.checked);
+
+  const styles = {
+    ...sharedStyles,
+    ...(darkModeOn
+      ? {
+        backgroundColor: "black",
+        color: "white"
+      }
+      : {
+        backgroundColor: "white",
+        color: "black"
+      })
+  };
+
+  return (
+    <div style={styles}>
+      {darkModeOn === undefined ? (
+        <>Loading preferences...</>
+      ) : (
+          <>
+            <input
+              type="checkbox"
+              value="darkMode"
+              checked={darkModeOn}
+              id="darkModeOn"
+              name="darkModeOn"
+              style={{ width: "3rem", height: "3rem" }}
+              onChange={handleOnChange}
+            />
+            <label htmlFor="darkModeOn">Use dark mode?</label>
+          </>
+        )}
+    </div>
+  );
+}
+
+export default App;
+```
