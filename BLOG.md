@@ -95,4 +95,56 @@ We successfully wrote something into IndexedDB, read it back and printed that va
 
 #### Usage in a React hook
 
-For example, a user may have preferences around the way they interact with the app
+What we've done so far is slightly abstract. It would be good to implement a real-world use case.  Let's create an application which gives users the choice between using a "Dark mode" version of the app or not.  To do that we'll replace our `App.tsx` with this:
+
+```tsx
+import React, { useState } from "react";
+import "./App.css";
+
+const sharedStyles = {
+  height: "30rem",
+  fontSize: "5rem",
+  textAlign: "center"
+} as const;
+
+function App() {
+  const [darkModeOn, setDarkModeOn] = useState(true)
+  const handleOnChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => setDarkModeOn(target.checked);
+
+  const styles = {
+    ...sharedStyles,
+    ...(darkModeOn
+      ? {
+          backgroundColor: "black",
+          color: "white"
+        }
+      : {
+          backgroundColor: "white",
+          color: "black"
+        })
+  };
+
+  return (
+    <div style={styles}>
+      <input
+        type="checkbox"
+        value="darkMode"
+        checked={darkModeOn}
+        id="darkModeOn"
+        name="darkModeOn"
+        style={{ width: "3rem", height: "3rem" }}
+        onChange={handleOnChange}
+      />
+      <label htmlFor="darkModeOn">Use dark mode?</label>
+    </div>
+  );
+}
+
+export default App;
+```
+
+When you run the app you can see how it works:
+
+![use dark mode](use-dark-mode.gif)
+
+Looking at the code you'll be able to see that this is implemented using React's `useState` hook.  So any user preference selected will be lost on a page refresh.  Let's see if we can take this state and move it into IndexedDB using `IDB-Keyval`.
