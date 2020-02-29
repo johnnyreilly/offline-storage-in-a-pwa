@@ -93,7 +93,7 @@ What happens when we run our application with `yarn start`?  Let's do that and t
 
 We successfully wrote something into IndexedDB, read it back and printed that value to the console.  Amazing!
 
-#### Usage in a React hook
+#### Usage in React
 
 What we've done so far is slightly abstract. It would be good to implement a real-world use case.  Let's create an application which gives users the choice between using a "Dark mode" version of the app or not.  To do that we'll replace our `App.tsx` with this:
 
@@ -148,3 +148,82 @@ When you run the app you can see how it works:
 ![use dark mode](use-dark-mode.gif)
 
 Looking at the code you'll be able to see that this is implemented using React's `useState` hook.  So any user preference selected will be lost on a page refresh.  Let's see if we can take this state and move it into IndexedDB using `IDB-Keyval`.
+
+We'll change the code like so:
+
+```tsx
+import React, { useState, useEffect } from "react";
+import { set, get } from "idb-keyval";
+import "./App.css";
+
+const sharedStyles = {
+  height: "30rem",
+  fontSize: "5rem",
+  textAlign: "center"
+} as const;
+
+function App() {
+  const [darkModeOn, setDarkModeOn] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    get<boolean>("darkModeOn").then(value =>
+      // If a value is retrieved then use it; otherwise default to true
+      setDarkModeOn(value ?? true)
+    );
+  }, [setDarkModeOn]);
+
+  const handleOnChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
+    setDarkModeOn(target.checked);
+
+    set("darkModeOn", target.checked);
+  };
+
+  const styles = {
+    ...sharedStyles,
+    ...(darkModeOn
+      ? {
+          backgroundColor: "black",
+          color: "white"
+        }
+      : {
+          backgroundColor: "white",
+          color: "black"
+        })
+  };
+
+  return (
+    <div style={styles}>
+      {darkModeOn === undefined ? (
+        <>Loading preferences...</>
+      ) : (
+        <>
+          <input
+            type="checkbox"
+            value="darkMode"
+            checked={darkModeOn}
+            id="darkModeOn"
+            name="darkModeOn"
+            style={{ width: "3rem", height: "3rem" }}
+            onChange={handleOnChange}
+          />
+          <label htmlFor="darkModeOn">Use dark mode?</label>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+
+The changes here are:
+
+1. `darkModeOn` is now initialised to `undefined` and the app displays a loading message until `darkModeOn` has a value.
+2. The app attempts to app load a value from IDB-Keyval with the key `'darkModeOn'` and set `darkModeOn` with the retrieved value.  If no value is retrieved then it sets `darkModeOn` to `true`.
+3. When the checkbox is changed, the corresponding value is both applied to `darkModeOn` and saved to IDB-Keyval with the key `'darkModeOn'`
+
+As you can see, this means that we are persisting preferences beyond page refresh in a fashion that will work both online *and* offline!
+
+![use dark mode with IDB-Keyval](use-dark-mode-with-idb-keyval.gif)
+
+
