@@ -24,7 +24,7 @@ Fortunately, `localStorage` is not the only game in town.  There's alternative o
 
 It's clear that IndexedDB is *very* powerful.  But it doesn't sound very simple. A further look at the [MDN example](https://github.com/mdn/to-do-notifications/blob/8b3e1708598e42062b0136608b1c5fbb66520f0a/scripts/todo.js#L48) of how to interact with IndexedDB does little to remove that thought.
 
-We'd like to be able to access data offline; but in a simple fashion.  Like we could with `localStorage` which rejoiced in a wonderfully elegant API. If only someone would build an astraction on top of IndexedDB to make our lives easier.
+We'd like to be able to access data offline; but in a simple fashion.  Like we could with `localStorage` which has a wonderfully straightforward API. If only someone would build an astraction on top of IndexedDB to make our lives easier...
 
 Someone did.
 
@@ -38,15 +38,61 @@ The API is essentially equivalent to `localStorage` with a few lovely difference
 
 1. The API is promise based; all functions return a `Promise`; this makes it a non-blocking API.
 2. The API is not restricted to `string`s as `localStorage` is. To quote the docs: *this is IDB-backed, you can store anything structured-clonable (numbers, arrays, objects, dates, blobs etc)*
+3. Because this is abstraction built on top of IndexedDB, it can be used both in the context of a typical web app and also in a `Worker` or a `ServiceWorker` if required.
 
-Because this is abstraction built on top of IndexedDB, it can be used both in the context of a typical web app and also in a `Worker` or a `ServiceWorker` if required.
+#### Simple usage
 
-Let's take a look at what usage of `IDB-Keyval` might look like.
+Let's take a look at what usage of `IDB-Keyval` might be like. For that we're going to need an application. It would be good to be able to demonstrate both simple usage and also how usage in the context of an application might look.
 
-(Please note, there is nothing React specific)
+Let's spin up a TypeScript React app with [Create React App](https://create-react-app.dev/):
 
 ```shell
 npx create-react-app offline-storage-in-a-pwa --template typescript
 ```
+
+This creates us a simple app. Now let's add IDB-Keyval to it:
+
+```shell
+yarn add idb-keyval
+```
+
+Then, let's update the `index.tsx` file to add a function that tests using IDB-Keyval:
+
+```tsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { set, get } from 'idb-keyval';
+import './index.css';
+import App from './App';
+import * as serviceWorker from './serviceWorker';
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+serviceWorker.register();
+
+async function testIDBKeyval() {
+    await set('hello', 'world');
+    const whatDoWeHave = await get('hello');
+    console.log(`When we queried idb-keyval for 'hello', we found: ${whatDoWeHave}`);
+}
+
+testIDBKeyval();
+```
+
+As you can see, we've added a `testIDBKeyval` function which does the following:
+
+1. Adds a value of `'world'` to IndexedDB using IDB-Keyval for the key of `'hello'`
+2. Queries IndexedDB using IDB-Keyval for the key of `'hello'` and stores it in the variable `whatDoWeHave`
+3. Logs out what we found.
+
+You'll also note that `testIDBKeyval` is an `async` function. This is so that we can use `await` when we're interacting with IDB-Keyval.  Given that its API is `Promise` based, it is `await` friendly.  Where you're performing more than an a single asynchronous operation at a time, it's often valuable to use `async` / `await` to increase the readability of your codebase.
+
+What happens when we run our application with `yarn start`?  Let's do that and take a look at the devtools:
+
+![hello world](hello_world_idb_keyval.png)
+
+We successfully wrote something into IndexedDB, read it back and printed that value to the console.  Amazing!
+
+#### Usage in a React hook
 
 For example, a user may have preferences around the way they interact with the app
