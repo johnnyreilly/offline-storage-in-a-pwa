@@ -312,3 +312,9 @@ function App() {
 
 export default App;
 ```
+
+#### Conclusion
+
+This post has demonstrate how a web application or a PWA can safely store data that is persisted between sessions using native browser capabilities easily.  IndexedDB powered the solution we've built.  We used used [IDB-Keyval](https://github.com/jakearchibald/idb-keyval) for the delightful and familiar abstraction it offers over IndexedDB.  It's allowed us to come up with a solution with a similarly lovely API. It's worth knowing that there are alternatives to IDB-Keyval available such as [localForage](https://github.com/localForage/localForage). If you are building for older browsers which may lack good IndexedDB support then this would be a good choice.  But be aware that with greater backwards compatibility comes greater download size.  Do consider this and make the tradeoffs that make sense for you.
+
+Finally, I've finished this post illustrating what usage would look like in a React context.  Do be aware that there's nothing React specific about our offline storage mechanism.  So if you're rolling with Vue, Angular or something else entirely: *this is for you too*! Offline storage is a feature that provide much greater user experiences.  Please do consider making use of it in your applications.
